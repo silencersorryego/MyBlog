@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pc.blog.mapper.IBlogMapper">
+    <resultMap id="AdminBlog" type="com.pc.blog.domain.Blog">
+        <id column="id" property="id"/>
+        <result column="title" property="title"/>
+        <result column="recommended" property="recommended"/>
+        <result column="update_time" property="updateTime"/>
+        <association property="type" javaType="com.pc.blog.domain.Type">
+            <result property="name" column="name"/>
+        </association>
+    </resultMap>
+
+
+    <select id="listAdminBlog" resultMap="AdminBlog">
+        select b.id,title,recommended,update_time,b.type_id,t.name
+        from tb_blog b
+        left join tb_type t
+        on b.type_id = t.id
+        order by update_time desc
+    </select>
+
+    <insert id="saveBlogIdAndTagId">
+        insert into tb_blog_tag
+        values (#{blogId},#{tagId})
+    </insert>
+    <delete id="deleteBlogIdAndTagId">
+        delete from tb_blog_tag
+        where blog_id = #{blogId}
+    </delete>
+
+
+    <select id="getBlogBySearch" resultMap="AdminBlog">
+        select b.id,b.title,b.update_time,b.recommended,b.type_id,t.name from tb_blog b left outer join
+        tb_type t on b.type_id = t.id
+        where 1=1
+        <if test="title != null">
+            AND title like "%"#{title}"%"
+        </if>
+        <if test="typeId != 0">
+            AND type_id = #{typeId}
+        </if>
+        <if test="recommended != 0">
+            AND recommended = #{recommended}
+        </if>
+        order by b.update_time desc
+    </select>
+
+
+    <resultMap id="indexBlog" type="com.pc.blog.domain.Blog">
+        <id property="id" column="id"/>
+        <result property="title" column="title"/>
+        <result property="firstPicture" column="first_picture"/>
+        <result property="view" column="view"/>
+        <result property="content" column="content"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="description" column="description"/>
+        <association property="type" javaType="com.pc.blog.domain.Type">
+            <result property="name" column="name"/>
+        </association>
+
+        <association property="user" javaType="com.pc.blog.domain.User">
+            <result property="avatar" column="avatar"/>
+            <result property="nickName" column="nick_name"/>
+        </association>
+    </resultMap>
+
+    <select id="indexListBlog" resultMap="indexBlog">
+        select b.id,b.title,b.first_picture,b.content, b.view,b.update_time,
+        t.name ,
+        u.nick_name, u.avatar
+        from tb_blog b, tb_type t,tb_user u
+        where b.type_id = t.id and  u.id = b.user_id order by b.update_time desc
+    </select>
+    <select id="indexListBlogByTypeId" resultMap="indexBlog">
+        select b.id,b.title,b.first_picture,b.content, b.view,b.update_time,
+        t.name ,
+        u.nick_name, u.avatar
+        from tb_blog b, tb_type t,tb_user u
+        where b.type_id = t.id and  u.id = b.user_id and b.type_id = #{typeId} order by b.update_time desc
+    </select>
+
+    <select id="indexBlogByTagId" resultMap="indexBlog">
+        select b.id,b.title,b.update_time,b.view,b.content,b.first_picture,b.type_id,b.user_id,t.name,u.avatar,u.nick_name
+        from tb_blog b,tb_type t,tb_user u ,tb_blog_tag bt,tb_tag
+        where b.type_id = t.id and u.id = b.user_id and bt.blog_id = b.id and bt.tag_id = tb_tag.id and tb_tag.id = #{tagId}
+        order by b.update_time desc
+    </select>
+</mapper>
